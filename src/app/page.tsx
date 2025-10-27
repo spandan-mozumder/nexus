@@ -115,9 +115,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>
-            &copy; 2025 Nexus. Built with Next.js, TypeScript, and ❤️
-          </p>
+          <p>&copy; 2025 Nexus. Built with Next.js, TypeScript, and ❤️</p>
         </div>
       </footer>
     </div>

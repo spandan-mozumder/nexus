@@ -30,9 +30,7 @@ export default async function DashboardPage() {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Logo size="md" />
-            <h1 className="text-xl font-bold tracking-tight">
-              Nexus
-            </h1>
+            <h1 className="text-xl font-bold tracking-tight">Nexus</h1>
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle />
@@ -96,7 +94,11 @@ export default async function DashboardPage() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {workspaces.map((workspace) => (
-              <Link key={workspace.id} href={`/workspace/${workspace.slug}`} prefetch={true}>
+              <Link
+                key={workspace.id}
+                href={`/workspace/${workspace.slug}`}
+                prefetch={true}
+              >
                 <Card className="hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full flex flex-col">
                   <CardHeader>
                     <CardTitle className="flex items-start justify-between">
