@@ -125,7 +125,7 @@ export async function getWorkspaceChannels(workspaceSlug: string) {
 
     const workspace = await db.workspace.findUnique({
       where: { slug: workspaceSlug },
-      select: { id: true },
+      select: { id: true, slug: true },
     });
 
     if (!workspace) {
@@ -179,7 +179,7 @@ export async function getWorkspaceChannels(workspaceSlug: string) {
       },
     });
 
-    return { success: true, data: channels, workspaceId: workspace.id };
+    return { success: true, data: channels, workspaceId: workspace.id, workspaceSlug: workspace.slug };
   } catch (error) {
     console.error("Error getting channels:", error);
     return { error: "Failed to fetch channels" };
@@ -778,7 +778,7 @@ export async function getWorkspaceConversations(workspaceSlug: string) {
 
     const workspace = await db.workspace.findUnique({
       where: { slug: workspaceSlug },
-      select: { id: true },
+      select: { id: true, slug: true },
     });
 
     if (!workspace) {
@@ -822,9 +822,247 @@ export async function getWorkspaceConversations(workspaceSlug: string) {
       },
     });
 
-    return { success: true, data: conversations, workspaceId: workspace.id };
+    return { success: true, data: conversations, workspaceId: workspace.id, workspaceSlug: workspace.slug };
   } catch (error) {
     console.error("Error getting conversations:", error);
     return { error: "Failed to fetch conversations" };
+  }
+}
+
+// Channel member management
+export async function getChannelMembers(channelId: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" };
+    }
+
+    const channel = await db.channel.findUnique({
+      where: { id: channelId },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        workspace: {
+          select: {
+            id: true,
+            members: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    avatar: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!channel) {
+      return { error: "Channel not found" };
+    }
+
+    // Check if user is a member of the channel
+    const isMember = channel.members.some((m) => m.userId === session.user.id);
+    if (!isMember) {
+      return { error: "Access denied" };
+    }
+
+    return {
+      success: true,
+      data: {
+        channelMembers: channel.members,
+        workspaceMembers: channel.workspace.members,
+        isPrivate: channel.isPrivate,
+        channelCreatorId: channel.createdById,
+      },
+    };
+  } catch (error) {
+    console.error("Error getting channel members:", error);
+    return { error: "Failed to fetch channel members" };
+  }
+}
+
+export async function addChannelMember(channelId: string, userId: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" };
+    }
+
+    const channel = await db.channel.findUnique({
+      where: { id: channelId },
+      include: {
+        members: true,
+        workspace: {
+          include: {
+            members: true,
+          },
+        },
+      },
+    });
+
+    if (!channel) {
+      return { error: "Channel not found" };
+    }
+
+    // Check if current user is a member of the channel
+    const currentUserIsMember = channel.members.some(
+      (m) => m.userId === session.user.id
+    );
+    if (!currentUserIsMember) {
+      return { error: "Access denied" };
+    }
+
+    // Check if user to add is a workspace member
+    const isWorkspaceMember = channel.workspace.members.some(
+      (m) => m.userId === userId
+    );
+    if (!isWorkspaceMember) {
+      return { error: "User is not a member of this workspace" };
+    }
+
+    // Check if already a member
+    const alreadyMember = channel.members.some((m) => m.userId === userId);
+    if (alreadyMember) {
+      return { error: "User is already a member of this channel" };
+    }
+
+    await db.channelMember.create({
+      data: {
+        channelId,
+        userId,
+      },
+    });
+
+    revalidatePath(`/workspace/${channel.workspaceId}/messages`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding channel member:", error);
+    return { error: "Failed to add member" };
+  }
+}
+
+export async function removeChannelMember(channelId: string, userId: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" };
+    }
+
+    const channel = await db.channel.findUnique({
+      where: { id: channelId },
+      include: {
+        members: true,
+      },
+    });
+
+    if (!channel) {
+      return { error: "Channel not found" };
+    }
+
+    // Only channel creator or user themselves can remove members
+    const isCreator = channel.createdById === session.user.id;
+    const isSelf = userId === session.user.id;
+
+    if (!isCreator && !isSelf) {
+      return { error: "Only the channel creator can remove other members" };
+    }
+
+    // Cannot remove the channel creator
+    if (userId === channel.createdById && !isSelf) {
+      return { error: "Cannot remove the channel creator" };
+    }
+
+    await db.channelMember.delete({
+      where: {
+        channelId_userId: {
+          channelId,
+          userId,
+        },
+      },
+    });
+
+    revalidatePath(`/workspace/${channel.workspaceId}/messages`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error removing channel member:", error);
+    return { error: "Failed to remove member" };
+  }
+}
+
+export async function getChannelDetails(channelId: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { error: "Unauthorized" };
+    }
+
+    const channel = await db.channel.findUnique({
+      where: { id: channelId },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                avatar: true,
+              },
+            },
+          },
+        },
+        project: {
+          select: {
+            id: true,
+            name: true,
+            key: true,
+            color: true,
+          },
+        },
+        _count: {
+          select: {
+            messages: true,
+          },
+        },
+      },
+    });
+
+    if (!channel) {
+      return { error: "Channel not found" };
+    }
+
+    // Check if user is a member
+    const isMember = channel.members.some((m) => m.userId === session.user.id);
+    if (!isMember && channel.isPrivate) {
+      return { error: "Access denied" };
+    }
+
+    return {
+      success: true,
+      data: channel,
+      isCreator: channel.createdById === session.user.id,
+      isMember,
+    };
+  } catch (error) {
+    console.error("Error getting channel details:", error);
+    return { error: "Failed to fetch channel details" };
   }
 }

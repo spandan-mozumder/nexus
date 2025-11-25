@@ -159,7 +159,7 @@ export function BoardList({ boards, workspaceId }: BoardListProps) {
               <CardHeader className="p-4 h-full flex flex-col justify-between">
                 <div className="space-y-2">
                   <div className="flex items-start justify-between">
-                    <CardTitle className="text-white text-xl font-bold line-clamp-2">
+                    <CardTitle className="text-black text-xl font-bold line-clamp-2">
                       {board.title}
                     </CardTitle>
                     <ArrowRight className="h-5 w-5 text-white/70 group-hover:text-white group-hover:translate-x-1 transition-all shrink-0" />

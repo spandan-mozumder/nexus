@@ -19,6 +19,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { CreateChannelModal } from "./create-channel-modal";
+import { ChannelListSkeleton } from "./messages-skeleton";
 import { cn } from "@/lib/utils";
 
 interface ChannelListProps {
@@ -36,32 +37,46 @@ export function ChannelList({
   const [channelsExpanded, setChannelsExpanded] = useState(true);
   const [dmsExpanded, setDmsExpanded] = useState(true);
 
-  const { data: channelsResult } = useQuery({
+  const { data: channelsResult, isLoading: isLoadingChannels, error: channelsError } = useQuery({
     queryKey: ["channels", workspaceSlug],
     queryFn: async () => {
       const result = await getWorkspaceChannels(workspaceSlug);
       if (result.error) throw new Error(result.error);
-      return { channels: result.data, workspaceId: result.workspaceId };
+      return { channels: result.data, workspaceId: result.workspaceId, workspaceSlug: result.workspaceSlug };
     },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 1,
   });
 
-  const { data: conversationsResult } = useQuery({
+  const { data: conversationsResult, isLoading: isLoadingConversations, error: conversationsError } = useQuery({
     queryKey: ["conversations", workspaceSlug],
     queryFn: async () => {
       const result = await getWorkspaceConversations(workspaceSlug);
       if (result.error) throw new Error(result.error);
-      return { conversations: result.data, workspaceId: result.workspaceId };
+      return { conversations: result.data, workspaceId: result.workspaceId, workspaceSlug: result.workspaceSlug };
     },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 1,
   });
 
   const channels = channelsResult?.channels || [];
   const conversations = conversationsResult?.conversations || [];
   const workspaceId = channelsResult?.workspaceId;
+  // Use the slug from results or fall back to the prop (which is the slug from URL)
+  const resolvedSlug = channelsResult?.workspaceSlug || workspaceSlug;
 
-  if (!workspaceId) {
+  // Show skeleton only during initial load
+  if (isLoadingChannels || isLoadingConversations) {
+    return <ChannelListSkeleton />;
+  }
+
+  // Show error state
+  if (channelsError || conversationsError) {
     return (
-      <div className="w-64 border-r bg-muted/10 flex items-center justify-center p-4">
-        <p className="text-muted-foreground text-sm">Loading...</p>
+      <div className="w-72 border-r bg-gradient-to-br from-background to-muted/20 flex flex-col items-center justify-center p-4">
+        <p className="text-sm text-muted-foreground text-center">
+          Failed to load channels. Please refresh the page.
+        </p>
       </div>
     );
   }
@@ -81,7 +96,7 @@ export function ChannelList({
 
       <ScrollArea className="flex-1">
         <div className="p-3">
-          {}
+          {/* Channels Section */}
           <div className="mb-4">
             <button
               onClick={() => setChannelsExpanded(!channelsExpanded)}
@@ -114,7 +129,7 @@ export function ChannelList({
             {channelsExpanded && (
               <div className="mt-2 space-y-1">
                 {channels.map((channel) => {
-                  const href = `/workspace/${workspaceId}/messages/channel/${channel.id}`;
+                  const href = `/workspace/${resolvedSlug}/messages/channel/${channel.id}`;
                   const isActive = pathname === href;
 
                   return (
@@ -162,7 +177,7 @@ export function ChannelList({
 
           <Separator className="my-3" />
 
-          {}
+          {/* Direct Messages Section */}
           <div>
             <button
               onClick={() => setDmsExpanded(!dmsExpanded)}
@@ -188,7 +203,7 @@ export function ChannelList({
                     conversation.memberOneId === currentUserId
                       ? conversation.memberTwo
                       : conversation.memberOne;
-                  const href = `/workspace/${workspaceId}/messages/conversation/${conversation.id}`;
+                  const href = `/workspace/${resolvedSlug}/messages/conversation/${conversation.id}`;
                   const isActive = pathname === href;
 
                   return (
@@ -222,7 +237,7 @@ export function ChannelList({
       </ScrollArea>
 
       <CreateChannelModal
-        workspaceId={workspaceId}
+        workspaceId={workspaceId || ""}
         open={createChannelOpen}
         onOpenChange={setCreateChannelOpen}
       />

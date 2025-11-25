@@ -17,7 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, MoreVertical, Trash2 } from "lucide-react";
+import { Plus, MoreVertical, Trash2, Loader2 } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 import { deleteIssue, updateIssue } from "@/features/boards/actions";
 import { toast } from "sonner";
@@ -162,7 +162,7 @@ export function BoardIssuesKanban({
                 <div className={`rounded-t-lg p-3 ${column.color}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-sm">{column.title}</h3>
+                      <h3 className="font-semibold text-sm" style={{ color: "#000000" }}>{column.title}</h3>
                       <Badge variant="secondary" className="h-5 min-w-5 px-1.5">
                         {columnIssues.length}
                       </Badge>
@@ -224,7 +224,11 @@ export function BoardIssuesKanban({
                                         disabled={deletingIssueId === issue.id}
                                         className="text-destructive focus:text-destructive"
                                       >
-                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        {deletingIssueId === issue.id ? (
+                                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        ) : (
+                                          <Trash2 className="h-4 w-4 mr-2" />
+                                        )}
                                         {deletingIssueId === issue.id ? "Deleting..." : "Delete"}
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>

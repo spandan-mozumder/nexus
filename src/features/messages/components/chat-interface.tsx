@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Send, Smile, MoreVertical, MessageSquare } from "lucide-react";
+import { Send, Smile, MoreVertical, MessageSquare, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistance } from "date-fns";
 import { getInitials } from "@/lib/utils";
@@ -17,6 +17,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { ChatSkeleton, MessageItemSkeleton } from "./messages-skeleton";
 
 interface ChatInterfaceProps {
   channelId: string;
@@ -78,11 +79,7 @@ export function ChatInterface({
   }, [messages]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">Loading messages...</p>
-      </div>
-    );
+    return <ChatSkeleton />;
   }
 
   return (
@@ -218,14 +215,22 @@ export function ChatInterface({
 
           {messages.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
-              <p>No messages yet. Start the conversation!</p>
+              <div className="flex flex-col items-center gap-3">
+                <div className="p-4 rounded-full bg-muted/50">
+                  <MessageSquare className="h-8 w-8 text-muted-foreground/50" />
+                </div>
+                <div>
+                  <p className="font-medium">No messages yet</p>
+                  <p className="text-sm">Start the conversation!</p>
+                </div>
+              </div>
             </div>
           )}
         </div>
       </ScrollArea>
 
-      {}
-      <div className="border-t p-4">
+      {/* Message Input */}
+      <div className="border-t p-4 bg-background">
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <Input
             value={message}
@@ -239,7 +244,11 @@ export function ChatInterface({
             size="icon"
             disabled={!message.trim() || sendMutation.isPending}
           >
-            <Send className="h-4 w-4" />
+            {sendMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </Button>
         </form>
       </div>

@@ -35,7 +35,7 @@ export function BoardDetailClient({
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-shrink-0">
         <div className="p-6">
-          <h1 className="text-3xl font-bold">{board.title}</h1>
+          <h1 className="text-3xl font-bold text-black">{board.title}</h1>
           {board.description && (
             <p className="text-muted-foreground mt-2">{board.description}</p>
           )}

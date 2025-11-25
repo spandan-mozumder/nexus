@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, LayoutDashboard, Calendar } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
+import { BoardsSkeleton } from "@/features/boards/components/boards-skeleton";
 
 async function ProjectBoardsList({
   projectId,
@@ -50,7 +51,7 @@ async function ProjectBoardsList({
           <Card className="hover:border-primary transition-colors cursor-pointer">
             <CardHeader className="pb-3">
               <div
-                className="h-20 rounded-lg mb-3 flex items-center justify-center text-white font-bold text-lg"
+                className="h-20 rounded-lg mb-3 flex items-center justify-center text-black font-bold text-lg"
                 style={{ backgroundColor: board.backgroundColor || "#0079BF" }}
               >
                 {board.title}
@@ -122,7 +123,7 @@ export default async function ProjectBoardsPage({
         </Link>
       </div>
 
-      <Suspense fallback={<div className="text-center py-8">Loading...</div>}>
+      <Suspense fallback={<BoardsSkeleton />}>
         <ProjectBoardsList projectId={projectId} slug={slug} />
       </Suspense>
     </div>
