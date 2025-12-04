@@ -15,6 +15,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/logo";
@@ -25,12 +26,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, User, Mail, Lock, ArrowRight, AlertCircle, Check } from "lucide-react";
 
 const formSchema = z
   .object({
     name: z.string().min(2, "Name must be at least 2 characters"),
-    email: z.string().email("Invalid email address"),
+    email: z.string().email("Please enter a valid email address"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
   })
@@ -53,6 +55,9 @@ export default function SignUpPage() {
       confirmPassword: "",
     },
   });
+
+  const password = form.watch("password");
+  const hasMinLength = password.length >= 8;
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setError(null);
@@ -83,26 +88,35 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 px-4 py-12">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+      </div>
+
+      <Card className="w-full max-w-md relative shadow-xl border-border/50">
+        <CardHeader className="space-y-4 pb-6">
+          <div className="flex justify-center">
             <Logo size="lg" />
           </div>
-          <CardTitle className="text-2xl font-bold text-center">
-            Create an account
-          </CardTitle>
-          <CardDescription className="text-center">
-            Enter your details to get started
-          </CardDescription>
+          <div className="text-center space-y-1.5">
+            <CardTitle className="text-2xl font-bold">
+              Create an account
+            </CardTitle>
+            <CardDescription>
+              Enter your details to get started
+            </CardDescription>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pb-8">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               {error && (
-                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-                  {error}
-                </div>
+                <Alert variant="destructive" className="animate-fadeIn">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
 
               <FormField
@@ -112,11 +126,15 @@ export default function SignUpPage() {
                   <FormItem>
                     <FormLabel>Name</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="John Doe"
-                        disabled={isLoading}
-                        {...field}
-                      />
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="John Doe"
+                          disabled={isLoading}
+                          className="pl-10 h-11"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -130,12 +148,16 @@ export default function SignUpPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="you@example.com"
-                        type="email"
-                        disabled={isLoading}
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="you@example.com"
+                          type="email"
+                          disabled={isLoading}
+                          className="pl-10 h-11"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -149,13 +171,23 @@ export default function SignUpPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="••••••••"
-                        type="password"
-                        disabled={isLoading}
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="••••••••"
+                          type="password"
+                          disabled={isLoading}
+                          className="pl-10 h-11"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
+                    <FormDescription className="flex items-center gap-1.5 text-xs">
+                      <span className={hasMinLength ? "text-green-600 dark:text-green-400" : ""}>
+                        {hasMinLength && <Check className="inline h-3 w-3" />}
+                        At least 8 characters
+                      </span>
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -168,26 +200,42 @@ export default function SignUpPage() {
                   <FormItem>
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="••••••••"
-                        type="password"
-                        disabled={isLoading}
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="••••••••"
+                          type="password"
+                          disabled={isLoading}
+                          className="pl-10 h-11"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Account
+              <Button type="submit" className="w-full h-11 mt-2" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating account...
+                  </>
+                ) : (
+                  <>
+                    Create Account
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
               </Button>
 
-              <div className="text-center text-sm text-muted-foreground">
+              <div className="text-center text-sm text-muted-foreground pt-2">
                 Already have an account?{" "}
-                <Link href="/sign-in" className="text-primary hover:underline">
+                <Link 
+                  href="/sign-in" 
+                  className="text-primary font-medium hover:underline underline-offset-4 transition-colors"
+                >
                   Sign in
                 </Link>
               </div>

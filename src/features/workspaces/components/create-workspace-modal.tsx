@@ -22,14 +22,16 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Loader2, Plus } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, Plus, Sparkles, Building2 } from "lucide-react";
 import { toast } from "sonner";
 
 const formSchema = z.object({
-  name: z.string().min(3, "Name must be at least 3 characters"),
-  description: z.string().optional(),
+  name: z.string().min(3, "Name must be at least 3 characters").max(50, "Name must be less than 50 characters"),
+  description: z.string().max(200, "Description must be less than 200 characters").optional(),
 });
 
 export function CreateWorkspaceModal({
@@ -58,7 +60,9 @@ export function CreateWorkspaceModal({
       if (result?.error) {
         toast.error(result.error);
       } else if (result?.workspace) {
-        toast.success("Workspace created successfully!");
+        toast.success("Workspace created successfully!", {
+          description: `"${result.workspace.name}" is ready to use.`,
+        });
         setOpen(false);
         form.reset();
         router.push(`/workspace/${result.workspace.slug}`);
@@ -75,22 +79,29 @@ export function CreateWorkspaceModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {children || (
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
             New Workspace
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create Workspace</DialogTitle>
-          <DialogDescription>
-            Create a new workspace to organize your projects and collaborate
-            with your team.
-          </DialogDescription>
+      <DialogContent className="sm:max-w-[480px]">
+        <DialogHeader className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <Building2 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl">Create Workspace</DialogTitle>
+              <DialogDescription className="text-sm">
+                A space to organize projects and collaborate with your team.
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 mt-4">
             <FormField
               control={form.control}
               name="name"
@@ -99,11 +110,15 @@ export function CreateWorkspaceModal({
                   <FormLabel>Workspace Name</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="My Team"
+                      placeholder="e.g. Marketing Team, Product Dev"
                       disabled={isLoading}
+                      className="h-11"
                       {...field}
                     />
                   </FormControl>
+                  <FormDescription className="text-xs">
+                    This will be the display name for your workspace.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -114,11 +129,15 @@ export function CreateWorkspaceModal({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>
+                    Description
+                    <span className="text-muted-foreground font-normal ml-1">(optional)</span>
+                  </FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="What is this workspace for?"
+                    <Textarea
+                      placeholder="Briefly describe what this workspace is for..."
                       disabled={isLoading}
+                      className="resize-none min-h-[80px]"
                       {...field}
                     />
                   </FormControl>
@@ -127,7 +146,7 @@ export function CreateWorkspaceModal({
               )}
             />
 
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-3 pt-2">
               <Button
                 type="button"
                 variant="outline"
@@ -136,9 +155,18 @@ export function CreateWorkspaceModal({
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Workspace
+              <Button type="submit" disabled={isLoading} className="min-w-[140px]">
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Create Workspace
+                  </>
+                )}
               </Button>
             </div>
           </form>

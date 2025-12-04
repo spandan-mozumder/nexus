@@ -4,25 +4,19 @@ import { getWorkspaceBySlug } from "@/features/workspaces/actions";
 import { getUserProjects } from "@/features/workspaces/actions-nav";
 import { WorkspaceNav } from "@/features/workspaces/components/workspace-nav-project";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2, LayoutDashboard } from "lucide-react";
 
 function SidebarSkeleton() {
   return (
-    <div className="fixed left-0 top-0 h-screen w-72 border-r bg-gradient-to-br from-background to-muted/20 flex flex-col overflow-hidden">
-      <div className="p-4 border-b space-y-3 flex-shrink-0">
-        <Skeleton className="h-9 w-full" />
-        <div className="px-2 space-y-2">
-          <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-4 w-40" />
+    <div className="fixed left-0 top-0 h-screen w-72 border-r bg-gradient-to-br from-background to-muted/20 flex flex-col overflow-hidden items-center justify-center">
+      <div className="text-center space-y-3">
+        <div className="relative">
+          <LayoutDashboard className="h-12 w-12 text-muted-foreground/30" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          </div>
         </div>
-      </div>
-      <div className="p-3 border-b flex-shrink-0">
-        <Skeleton className="h-9 w-full" />
-      </div>
-      <div className="flex-1 p-3 space-y-2">
-        <Skeleton className="h-5 w-20 mb-3" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
+        <p className="text-sm text-muted-foreground">Loading workspace...</p>
       </div>
     </div>
   );

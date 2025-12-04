@@ -1,5 +1,4 @@
-import { Hash } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Hash, Loader2 } from "lucide-react";
 
 export default function MessagesLoading() {
   return (

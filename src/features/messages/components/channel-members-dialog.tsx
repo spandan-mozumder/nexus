@@ -26,7 +26,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import {
   Users,
@@ -146,16 +145,11 @@ export function ChannelMembersDialog({
         </DialogHeader>
 
         {isLoading ? (
-          <div className="space-y-3 py-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-full" />
-                <div className="flex-1">
-                  <Skeleton className="h-4 w-24 mb-1" />
-                  <Skeleton className="h-3 w-32" />
-                </div>
-              </div>
-            ))}
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center space-y-3">
+              <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+              <p className="text-sm text-muted-foreground">Loading members...</p>
+            </div>
           </div>
         ) : (
           <>

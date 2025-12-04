@@ -25,10 +25,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail, Lock, ArrowRight, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const formSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().email("Please enter a valid email address"),
   password: z.string().min(1, "Password is required"),
 });
 
@@ -70,26 +71,35 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 px-4 py-12">
+      {/* Background decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl" />
+      </div>
+
+      <Card className="w-full max-w-md relative shadow-xl border-border/50">
+        <CardHeader className="space-y-4 pb-6">
+          <div className="flex justify-center">
             <Logo size="lg" />
           </div>
-          <CardTitle className="text-2xl font-bold text-center">
-            Welcome back
-          </CardTitle>
-          <CardDescription className="text-center">
-            Sign in to your account to continue
-          </CardDescription>
+          <div className="text-center space-y-1.5">
+            <CardTitle className="text-2xl font-bold">
+              Welcome back
+            </CardTitle>
+            <CardDescription>
+              Sign in to your account to continue
+            </CardDescription>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pb-8">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               {error && (
-                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md">
-                  {error}
-                </div>
+                <Alert variant="destructive" className="animate-fadeIn">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
               )}
 
               <FormField
@@ -99,12 +109,16 @@ export default function SignInPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="you@example.com"
-                        type="email"
-                        disabled={isLoading}
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="you@example.com"
+                          type="email"
+                          disabled={isLoading}
+                          className="pl-10 h-11"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -118,26 +132,42 @@ export default function SignInPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input
-                        placeholder="••••••••"
-                        type="password"
-                        disabled={isLoading}
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="••••••••"
+                          type="password"
+                          disabled={isLoading}
+                          className="pl-10 h-11"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Sign In
+              <Button type="submit" className="w-full h-11 mt-2" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign In
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
               </Button>
 
-              <div className="text-center text-sm text-muted-foreground">
+              <div className="text-center text-sm text-muted-foreground pt-2">
                 Don't have an account?{" "}
-                <Link href="/sign-up" className="text-primary hover:underline">
+                <Link 
+                  href="/sign-up" 
+                  className="text-primary font-medium hover:underline underline-offset-4 transition-colors"
+                >
                   Sign up
                 </Link>
               </div>

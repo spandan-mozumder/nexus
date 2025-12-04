@@ -8,16 +8,17 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Send, Smile, MoreVertical, MessageSquare, Loader2 } from "lucide-react";
+import { Send, Smile, MessageSquare, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistance } from "date-fns";
 import { getInitials } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ChatSkeleton, MessageItemSkeleton } from "./messages-skeleton";
+import { ChatSkeleton } from "./messages-skeleton";
 
 interface ChatInterfaceProps {
   channelId: string;
@@ -34,6 +35,7 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const { data: messages = [], isLoading } = useQuery({
@@ -54,7 +56,11 @@ export function ChatInterface({
       } else {
         setMessage("");
         queryClient.invalidateQueries({ queryKey: ["messages", channelId] });
+        inputRef.current?.focus();
       }
+    },
+    onError: () => {
+      toast.error("Failed to send message");
     },
   });
 
@@ -83,12 +89,13 @@ export function ChatInterface({
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {}
+    <div className="flex flex-col h-full bg-background">
+      {/* Messages Area */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef}>
         <div className="space-y-4">
-          {messages.map((msg) => {
+          {messages.map((msg, index) => {
             const isOwnMessage = msg.senderId === currentUserId;
+            const showAvatar = index === 0 || messages[index - 1]?.senderId !== msg.senderId;
 
             const groupedReactions = msg.reactions.reduce(
               (acc, reaction) => {
@@ -104,43 +111,53 @@ export function ChatInterface({
             return (
               <div
                 key={msg.id}
-                className={`flex gap-3 ${isOwnMessage ? "flex-row-reverse" : ""}`}
+                className={cn(
+                  "flex gap-3 group animate-fadeIn",
+                  isOwnMessage && "flex-row-reverse"
+                )}
               >
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>
-                    {getInitials(msg.sender.name || msg.sender.email || "U")}
-                  </AvatarFallback>
-                </Avatar>
+                {showAvatar ? (
+                  <Avatar className="h-8 w-8 shrink-0 border">
+                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                      {getInitials(msg.sender.name || msg.sender.email || "U")}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <div className="w-8 shrink-0" />
+                )}
 
-                <div className={`flex-1 ${isOwnMessage ? "items-end" : ""}`}>
-                  <div className="flex items-baseline gap-2 mb-1">
-                    <span className="font-semibold text-sm">
-                      {msg.sender.name || msg.sender.email}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatDistance(new Date(msg.createdAt), new Date(), {
-                        addSuffix: true,
-                      })}
-                    </span>
-                    {msg.isEdited && (
-                      <Badge variant="outline" className="text-xs">
-                        edited
-                      </Badge>
-                    )}
-                  </div>
+                <div className={cn("flex-1 max-w-[75%]", isOwnMessage && "flex flex-col items-end")}>
+                  {showAvatar && (
+                    <div className={cn("flex items-baseline gap-2 mb-1", isOwnMessage && "flex-row-reverse")}>
+                      <span className="font-medium text-sm">
+                        {msg.sender.name || msg.sender.email}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistance(new Date(msg.createdAt), new Date(), {
+                          addSuffix: true,
+                        })}
+                      </span>
+                      {msg.isEdited && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                          edited
+                        </Badge>
+                      )}
+                    </div>
+                  )}
 
                   <div
-                    className={`rounded-lg px-4 py-2 max-w-2xl ${
+                    className={cn(
+                      "rounded-2xl px-4 py-2.5 shadow-sm",
                       isOwnMessage
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
-                    }`}
+                        ? "bg-primary text-primary-foreground rounded-tr-sm"
+                        : "bg-muted rounded-tl-sm"
+                    )}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{msg.body}</p>
+                    <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.body}</p>
                   </div>
 
-                  {}
-                  <div className="flex gap-1 mt-1 flex-wrap">
+                  {/* Reactions */}
+                  <div className={cn("flex gap-1 mt-1.5 flex-wrap", isOwnMessage && "justify-end")}>
                     {Object.entries(groupedReactions).map(
                       ([emoji, reactions]) => {
                         const hasReacted = reactions.some(
@@ -156,21 +173,22 @@ export function ChatInterface({
                                 emoji,
                               })
                             }
-                            className={`text-xs px-2 py-0.5 rounded-full border flex items-center gap-1 hover:bg-muted ${
-                              hasReacted ? "bg-primary/10 border-primary" : ""
-                            }`}
+                            className={cn(
+                              "text-xs px-2 py-0.5 rounded-full border flex items-center gap-1 transition-colors hover:bg-accent",
+                              hasReacted && "bg-primary/10 border-primary/30"
+                            )}
                           >
                             <span>{emoji}</span>
-                            <span className="text-xs">{reactions.length}</span>
+                            <span className="text-xs font-medium">{reactions.length}</span>
                           </button>
                         );
                       },
                     )}
 
-                    {}
+                    {/* Add reaction button */}
                     <Popover>
                       <PopoverTrigger asChild>
-                        <button className="text-xs px-2 py-0.5 rounded-full border hover:bg-muted">
+                        <button className="text-xs px-2 py-0.5 rounded-full border hover:bg-accent transition-colors opacity-0 group-hover:opacity-100">
                           <Smile className="h-3 w-3" />
                         </button>
                       </PopoverTrigger>
@@ -185,7 +203,7 @@ export function ChatInterface({
                                   emoji,
                                 });
                               }}
-                              className="text-lg hover:bg-muted p-1 rounded"
+                              className="text-lg hover:bg-accent p-1.5 rounded-md transition-colors"
                             >
                               {emoji}
                             </button>
@@ -195,17 +213,15 @@ export function ChatInterface({
                     </Popover>
                   </div>
 
-                  {}
+                  {/* Replies indicator */}
                   {msg._count.replies > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="mt-1 h-auto p-1"
+                      className="mt-1 h-auto py-1 px-2 text-xs text-muted-foreground hover:text-foreground"
                     >
                       <MessageSquare className="h-3 w-3 mr-1" />
-                      <span className="text-xs">
-                        {msg._count.replies} replies
-                      </span>
+                      {msg._count.replies} {msg._count.replies === 1 ? 'reply' : 'replies'}
                     </Button>
                   )}
                 </div>
@@ -214,14 +230,14 @@ export function ChatInterface({
           })}
 
           {messages.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground">
-              <div className="flex flex-col items-center gap-3">
-                <div className="p-4 rounded-full bg-muted/50">
+            <div className="text-center py-16 text-muted-foreground">
+              <div className="flex flex-col items-center gap-4">
+                <div className="p-4 rounded-full bg-muted">
                   <MessageSquare className="h-8 w-8 text-muted-foreground/50" />
                 </div>
                 <div>
-                  <p className="font-medium">No messages yet</p>
-                  <p className="text-sm">Start the conversation!</p>
+                  <p className="font-medium text-foreground">No messages yet</p>
+                  <p className="text-sm">Be the first to start the conversation!</p>
                 </div>
               </div>
             </div>
@@ -230,18 +246,20 @@ export function ChatInterface({
       </ScrollArea>
 
       {/* Message Input */}
-      <div className="border-t p-4 bg-background">
+      <div className="border-t p-4 bg-background/80 backdrop-blur-sm">
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <Input
+            ref={inputRef}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type a message..."
-            className="flex-1"
+            className="flex-1 h-11"
             disabled={sendMutation.isPending}
           />
           <Button
             type="submit"
             size="icon"
+            className="h-11 w-11 shrink-0"
             disabled={!message.trim() || sendMutation.isPending}
           >
             {sendMutation.isPending ? (

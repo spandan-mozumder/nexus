@@ -18,6 +18,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -25,17 +26,18 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { createProject } from "../actions";
-import { Loader2 } from "lucide-react";
+import { Loader2, FolderKanban, Plus, Sparkles } from "lucide-react";
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100),
+  name: z.string().min(1, "Name is required").max(100, "Name is too long"),
   key: z
     .string()
     .min(2, "Key must be at least 2 characters")
     .max(10, "Key must be at most 10 characters")
     .regex(/^[A-Z]+$/, "Key must contain only uppercase letters"),
-  description: z.string().optional(),
+  description: z.string().max(500, "Description is too long").optional(),
 });
 
 interface CreateProjectModalProps {
@@ -55,6 +57,8 @@ export function CreateProjectModal({ workspaceId }: CreateProjectModalProps) {
     },
   });
 
+  const projectKey = form.watch("key");
+
   const mutation = useMutation({
     mutationFn: (data: z.infer<typeof formSchema>) =>
       createProject({ ...data, workspaceId }),
@@ -62,11 +66,16 @@ export function CreateProjectModal({ workspaceId }: CreateProjectModalProps) {
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Project created successfully");
+        toast.success("Project created successfully", {
+          description: "Your new project is ready to use.",
+        });
         queryClient.invalidateQueries({ queryKey: ["projects", workspaceId] });
         setOpen(false);
         form.reset();
       }
+    },
+    onError: () => {
+      toast.error("Failed to create project. Please try again.");
     },
   });
 
@@ -87,27 +96,39 @@ export function CreateProjectModal({ workspaceId }: CreateProjectModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Create Project</Button>
+        <Button className="gap-2">
+          <Plus className="h-4 w-4" />
+          Create Project
+        </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Create New Project</DialogTitle>
-          <DialogDescription>
-            Create a new project to organize and track your issues
-          </DialogDescription>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <FolderKanban className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <DialogTitle className="text-xl">Create New Project</DialogTitle>
+              <DialogDescription className="text-sm">
+                Organize and track your work with issues, boards, and docs.
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 mt-4">
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel>Project Name</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="My Project"
+                      placeholder="e.g. Website Redesign, Mobile App"
+                      className="h-11"
                       onChange={(e) => {
                         field.onChange(e);
                         handleNameChange(e.target.value);
@@ -118,6 +139,7 @@ export function CreateProjectModal({ workspaceId }: CreateProjectModalProps) {
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="key"
@@ -125,52 +147,75 @@ export function CreateProjectModal({ workspaceId }: CreateProjectModalProps) {
                 <FormItem>
                   <FormLabel>Project Key</FormLabel>
                   <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="PROJ"
-                      maxLength={10}
-                      onChange={(e) =>
-                        field.onChange(e.target.value.toUpperCase())
-                      }
-                    />
+                    <div className="relative">
+                      <Input
+                        {...field}
+                        placeholder="e.g. WEB, APP"
+                        maxLength={10}
+                        className="h-11 font-mono uppercase"
+                        onChange={(e) =>
+                          field.onChange(e.target.value.toUpperCase())
+                        }
+                      />
+                      {projectKey && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <Badge variant="secondary" className="font-mono text-xs">
+                            {projectKey}-123
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
                   </FormControl>
+                  <FormDescription className="text-xs">
+                    Used as prefix for issue IDs. Only uppercase letters allowed.
+                  </FormDescription>
                   <FormMessage />
-                  <p className="text-xs text-muted-foreground">
-                    Used for issue keys (e.g., {field.value || "PROJ"}-123)
-                  </p>
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>
+                    Description
+                    <span className="text-muted-foreground font-normal ml-1">(optional)</span>
+                  </FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
-                      placeholder="Describe your project..."
-                      rows={3}
+                      placeholder="What is this project about?"
+                      className="resize-none min-h-[80px]"
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <div className="flex gap-2 justify-end">
+
+            <div className="flex gap-3 justify-end pt-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}
+                disabled={mutation.isPending}
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={mutation.isPending}>
-                {mutation.isPending && (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Button type="submit" disabled={mutation.isPending} className="min-w-[140px]">
+                {mutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="mr-2 h-4 w-4" />
+                    Create Project
+                  </>
                 )}
-                Create Project
               </Button>
             </div>
           </form>

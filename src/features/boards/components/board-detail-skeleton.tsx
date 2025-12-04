@@ -1,33 +1,21 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2, Columns } from "lucide-react";
 
 export function BoardDetailSkeleton() {
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden">
-      <div className="border-b bg-background/95 backdrop-blur flex-shrink-0">
-        <div className="p-6">
-          <Skeleton className="h-10 w-1/3 mb-2" />
-          <Skeleton className="h-5 w-1/2" />
-        </div>
-      </div>
-
-      <div className="flex gap-4 p-6 h-full overflow-hidden">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="flex-shrink-0 w-80">
-            <div className="flex flex-col h-full">
-              <div className="rounded-t-lg p-3 bg-muted/50 mb-2">
-                <div className="flex items-center justify-between">
-                  <Skeleton className="h-5 w-24" />
-                  <Skeleton className="h-5 w-5 rounded-full" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                {[1, 2, 3].map((j) => (
-                  <Skeleton key={j} className="h-24 w-full rounded-lg" />
-                ))}
-              </div>
-            </div>
+    <div className="flex-1 flex items-center justify-center">
+      <div className="text-center space-y-4">
+        <div className="relative">
+          <Columns className="h-16 w-16 mx-auto text-muted-foreground/30" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
-        ))}
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Loading Board</h3>
+          <p className="text-sm text-muted-foreground">
+            Please wait while we load your kanban board...
+          </p>
+        </div>
       </div>
     </div>
   );

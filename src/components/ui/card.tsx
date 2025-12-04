@@ -2,19 +2,27 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-2xl border bg-card/50 backdrop-blur-sm text-card-foreground shadow-lg hover:shadow-xl transition-all duration-300",
-      className,
-    )}
-    {...props}
-  />
-));
+interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: "default" | "glass" | "elevated" | "outline" | "interactive";
+}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant = "default", ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "rounded-xl border bg-card text-card-foreground transition-all duration-200",
+        variant === "default" && "shadow-sm",
+        variant === "glass" && "bg-card/80 backdrop-blur-xl border-border/50 shadow-lg",
+        variant === "elevated" && "shadow-lg hover:shadow-xl",
+        variant === "outline" && "bg-transparent shadow-none",
+        variant === "interactive" && "shadow-sm hover:shadow-lg hover:-translate-y-0.5 cursor-pointer active:translate-y-0 active:shadow-md",
+        className,
+      )}
+      {...props}
+    />
+  )
+);
 Card.displayName = "Card";
 
 const CardHeader = React.forwardRef<
@@ -23,7 +31,7 @@ const CardHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-2 p-6", className)}
+    className={cn("flex flex-col space-y-1.5 p-6", className)}
     {...props}
   />
 ));
